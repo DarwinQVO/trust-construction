@@ -1,1 +1,0 @@
-/Users/darwinborges/finance/trust-construction/target/release/trust-construction: /Users/darwinborges/finance/trust-construction/src/db.rs /Users/darwinborges/finance/trust-construction/src/main.rs /Users/darwinborges/finance/trust-construction/src/parser.rs /Users/darwinborges/finance/trust-construction/src/ui.rs

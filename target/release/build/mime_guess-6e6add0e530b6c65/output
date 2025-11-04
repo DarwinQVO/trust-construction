@@ -1,1 +1,0 @@
-cargo:rustc-env=MIME_TYPES_GENERATED_PATH=/Users/darwinborges/finance/trust-construction/target/release/build/mime_guess-6e6add0e530b6c65/out/mime_types_generated.rs
