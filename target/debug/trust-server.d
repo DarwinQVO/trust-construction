@@ -1,0 +1,1 @@
+/Users/darwinborges/finance/trust-construction/target/debug/trust-server: /Users/darwinborges/finance/trust-construction/bin/server.rs /Users/darwinborges/finance/trust-construction/src/db.rs /Users/darwinborges/finance/trust-construction/src/lib.rs /Users/darwinborges/finance/trust-construction/src/parser.rs /Users/darwinborges/finance/trust-construction/web/index.html

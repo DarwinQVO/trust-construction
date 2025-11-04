@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Statements - Trust Construction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            border: 2px solid #444444;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .header .subtitle {
+            color: #cccccc;
+            opacity: 0.8;
+        }
+
+        /* Navigation */
+        .nav {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #444444;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background-color: #222222;
+        }
+
+        .nav-btn.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        /* Bank Groups */
+        .bank-group {
+            margin-bottom: 30px;
+            border: 2px solid #444444;
+            background-color: #000000;
+        }
+
+        .bank-header {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-bottom: 2px solid #444444;
+        }
+
+        .bank-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .bank-stats {
+            margin-top: 5px;
+            color: #888888;
+            font-size: 12px;
+        }
+
+        /* Source Files List */
+        .sources-list {
+            padding: 0;
+        }
+
+        .source-item {
+            padding: 15px;
+            border-bottom: 1px solid #1a1a1a;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .source-item:hover {
+            background-color: #0a0a0a;
+        }
+
+        .source-item:last-child {
+            border-bottom: none;
+        }
+
+        .source-filename {
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .source-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .stat-item {
+            color: #888888;
+        }
+
+        .stat-value {
+            color: #ffffff;
+        }
+
+        .stat-value.income {
+            color: #4ade80;
+        }
+
+        .stat-value.expense {
+            color: #ff5555;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #ffff00;
+            font-size: 18px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Error */
+        .error {
+            border: 2px solid #ff5555;
+            background-color: #1a1a1a;
+            color: #ff5555;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #666666;
+            opacity: 0.6;
+            font-size: 12px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444444;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🗄️ BANK STATEMENTS</h1>
+            <div class="subtitle">Source files grouped by bank with transaction statistics.</div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="/" class="nav-btn">TRANSACTIONS</a>
+            <a href="/statements" class="nav-btn active">STATEMENTS</a>
+        </div>
+
+        <!-- Loading/Error -->
+        <div id="loading" class="loading" style="display: none;">Loading statements</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <!-- Bank Groups Container -->
+        <div id="bank-groups"></div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Trust Construction System v0.1.0 | Badge 14: Bank Statements UI | Powered by Rust + Axum
+        </div>
+    </div>
+
+    <script>
+        // Group sources by bank
+        function groupByBank(sources) {
+            const groups = {};
+
+            sources.forEach(source => {
+                if (!groups[source.bank]) {
+                    groups[source.bank] = {
+                        bank: source.bank,
+                        sources: [],
+                        totalTransactions: 0,
+                        totalExpenses: 0,
+                        totalIncome: 0
+                    };
+                }
+
+                groups[source.bank].sources.push(source);
+                groups[source.bank].totalTransactions += source.transaction_count;
+                groups[source.bank].totalExpenses += source.total_expenses;
+                groups[source.bank].totalIncome += source.total_income;
+            });
+
+            return Object.values(groups);
+        }
+
+        // Render bank groups
+        function renderBankGroups(groups) {
+            const container = document.getElementById('bank-groups');
+            container.innerHTML = '';
+
+            if (groups.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #ffff00; padding: 40px;">No statements found</div>';
+                return;
+            }
+
+            groups.forEach(group => {
+                const bankDiv = document.createElement('div');
+                bankDiv.className = 'bank-group';
+
+                // Bank header
+                const header = document.createElement('div');
+                header.className = 'bank-header';
+                header.innerHTML = `
+                    <div class="bank-name">${group.bank}</div>
+                    <div class="bank-stats">
+                        ${group.sources.length} files |
+                        ${group.totalTransactions} transactions |
+                        Income: $${group.totalIncome.toFixed(2)} |
+                        Expenses: $${group.totalExpenses.toFixed(2)}
+                    </div>
+                `;
+
+                // Sources list
+                const sourcesList = document.createElement('div');
+                sourcesList.className = 'sources-list';
+
+                group.sources.forEach(source => {
+                    const sourceItem = document.createElement('div');
+                    sourceItem.className = 'source-item';
+                    sourceItem.onclick = () => viewSource(source.source_file);
+
+                    sourceItem.innerHTML = `
+                        <div class="source-filename">📄 ${source.source_file}</div>
+                        <div class="source-stats">
+                            <div class="stat-item">
+                                <span>Transactions:</span>
+                                <span class="stat-value">${source.transaction_count}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Income:</span>
+                                <span class="stat-value income">$${source.total_income.toFixed(2)}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Expenses:</span>
+                                <span class="stat-value expense">$${source.total_expenses.toFixed(2)}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Period:</span>
+                                <span class="stat-value">${source.date_range}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    sourcesList.appendChild(sourceItem);
+                });
+
+                bankDiv.appendChild(header);
+                bankDiv.appendChild(sourcesList);
+                container.appendChild(bankDiv);
+            });
+        }
+
+        // View source transactions
+        function viewSource(filename) {
+            // Redirect to statement detail page
+            window.location.href = `/statement-detail?file=${encodeURIComponent(filename)}`;
+        }
+
+        // Load sources
+        async function loadSources() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/sources');
+                const result = await response.json();
+
+                if (result.success) {
+                    const groups = groupByBank(result.data);
+                    renderBankGroups(groups);
+                } else {
+                    showError('Failed to load statements');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '❌ ERROR: ' + message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSources();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+/Users/darwinborges/finance/trust-construction/target/debug/deps/hashlink-0539e4df5f6827f9.d: /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lib.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_map.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_set.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lru_cache.rs
+
+/Users/darwinborges/finance/trust-construction/target/debug/deps/libhashlink-0539e4df5f6827f9.rlib: /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lib.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_map.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_set.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lru_cache.rs
+
+/Users/darwinborges/finance/trust-construction/target/debug/deps/libhashlink-0539e4df5f6827f9.rmeta: /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lib.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_map.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_set.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lru_cache.rs
+
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lib.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_map.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/linked_hash_set.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.9.1/src/lru_cache.rs:

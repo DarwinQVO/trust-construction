@@ -1,0 +1,18 @@
+# Documentation
+*.md
+!Cargo.toml
+
+# Build artifacts
+target/
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store

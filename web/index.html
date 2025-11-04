@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trust Construction System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            border: 2px solid #444444;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .header .subtitle {
+            color: #cccccc;
+            opacity: 0.8;
+        }
+
+        /* Stats Bar */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            border: 1px solid #444444;
+            padding: 15px;
+            background-color: #000000;
+        }
+
+        .stat-card .label {
+            color: #888888;
+            opacity: 0.8;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .stat-card.income .value { color: #4ade80; }
+        .stat-card.expense .value { color: #ff5555; }
+
+        /* Navigation */
+        .nav {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #444444;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background-color: #222222;
+        }
+
+        .nav-btn.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        /* Filters */
+        .filters {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #444444;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background-color: #222222;
+            color: #ffffff;
+        }
+
+        .filter-btn.active {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border-color: #3b82f6;
+        }
+
+        /* Table */
+        .table-container {
+            border: 2px solid #444444;
+            overflow-x: auto;
+            background-color: #000000;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #000000;
+            color: #888888;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #444444;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #1a1a1a;
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: #0a0a0a;
+        }
+
+        /* Type Colors */
+        .type-gasto { color: #ff5555; }
+        .type-ingreso { color: #4ade80; }
+        .type-pago_tarjeta { color: #facc15; }
+        .type-traspaso { color: #60a5fa; }
+
+        /* Amount Colors */
+        .amount-positive { color: #4ade80; }
+        .amount-negative { color: #ff5555; }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #ffff00;
+            font-size: 18px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Error */
+        .error {
+            border: 2px solid #ff5555;
+            background-color: #1a1a1a;
+            color: #ff5555;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #666666;
+            opacity: 0.6;
+            font-size: 12px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444444;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666666;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background-color: #000000;
+            border: 2px solid #444444;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #444444;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #ffffff;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: 1px solid #666666;
+            color: #999999;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        .modal-close:hover {
+            background-color: #666666;
+            color: #000000;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .detail-label {
+            color: #888888;
+            opacity: 0.8;
+            font-weight: bold;
+        }
+
+        .detail-value {
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        .provenance-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #444444;
+        }
+
+        .provenance-section h3 {
+            color: #888888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        /* Clickable rows */
+        tbody tr {
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background-color: #0a0a0a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🗄️ TRUST CONSTRUCTION SYSTEM</h1>
+            <div class="subtitle">Converting untrustworthy data into trustworthy data with mathematical guarantees.</div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="/" class="nav-btn active">TRANSACTIONS</a>
+            <a href="/statements" class="nav-btn">STATEMENTS</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="label">TOTAL TRANSACTIONS</div>
+                <div class="value" id="total-transactions">0</div>
+            </div>
+            <div class="stat-card income">
+                <div class="label">INCOME</div>
+                <div class="value" id="total-income">$0.00</div>
+            </div>
+            <div class="stat-card expense">
+                <div class="label">EXPENSES</div>
+                <div class="value" id="total-expenses">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">TRANSFERS</div>
+                <div class="value" id="total-transfers">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">CREDIT PAYMENTS</div>
+                <div class="value" id="total-credit">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterTransactions('all', this)">ALL</button>
+            <button class="filter-btn" onclick="filterTransactions('gasto', this)">EXPENSES</button>
+            <button class="filter-btn" onclick="filterTransactions('ingreso', this)">INCOME</button>
+            <button class="filter-btn" onclick="filterTransactions('pago_tarjeta', this)">CREDIT PAYMENTS</button>
+            <button class="filter-btn" onclick="filterTransactions('traspaso', this)">TRANSFERS</button>
+        </div>
+
+        <!-- Loading/Error -->
+        <div id="loading" class="loading" style="display: none;">Loading transactions</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>BANK</th>
+                        <th>MERCHANT</th>
+                        <th>DESCRIPTION</th>
+                        <th>AMOUNT</th>
+                        <th>TYPE</th>
+                        <th>CATEGORY</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-table">
+                    <!-- Transactions loaded via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Trust Construction System v0.1.0 | Badge 13: Web UI | Powered by Rust + Axum
+        </div>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🔍 TRANSACTION DETAIL</h2>
+                <button class="modal-close" onclick="closeModal()">CLOSE [ESC]</button>
+            </div>
+            <div id="modal-content">
+                <!-- Content filled by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allTransactions = [];
+        let currentFilter = 'all';
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const result = await response.json();
+
+                if (result.success) {
+                    const stats = result.data;
+                    document.getElementById('total-transactions').textContent = stats.total_transactions.toLocaleString();
+                    document.getElementById('total-income').textContent = '$' + stats.total_income.toFixed(2).toLocaleString();
+                    document.getElementById('total-expenses').textContent = '$' + stats.total_expenses.toFixed(2).toLocaleString();
+                    document.getElementById('total-transfers').textContent = '$' + stats.total_transfers.toFixed(2).toLocaleString();
+                    document.getElementById('total-credit').textContent = '$' + stats.total_credit_payments.toFixed(2).toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load transactions
+        async function loadTransactions() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/transactions');
+                const result = await response.json();
+
+                if (result.success) {
+                    allTransactions = result.data;
+                    renderTransactions(allTransactions);
+                } else {
+                    showError('Failed to load transactions');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Render transactions
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactions-table');
+            tbody.innerHTML = '';
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ffff00;">No transactions found</td></tr>';
+                return;
+            }
+
+            transactions.forEach(tx => {
+                const row = document.createElement('tr');
+
+                const typeClass = 'type-' + tx.transaction_type.toLowerCase();
+                const amountClass = tx.amount_numeric >= 0 ? 'amount-positive' : 'amount-negative';
+
+                row.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td>${tx.bank}</td>
+                    <td>${tx.merchant || '-'}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${tx.description}">${tx.description}</td>
+                    <td class="${amountClass}">$${Math.abs(tx.amount_numeric).toFixed(2)}</td>
+                    <td class="${typeClass}">${tx.transaction_type}</td>
+                    <td>${tx.category}</td>
+                `;
+
+                // Make row clickable to show detail
+                row.onclick = () => showTransactionDetail(tx);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filter transactions
+        async function filterTransactions(type, buttonElement) {
+            currentFilter = type;
+
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            if (buttonElement) {
+                buttonElement.classList.add('active');
+            }
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/filters/${type}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    renderTransactions(result.data);
+                }
+            } catch (error) {
+                showError('Error filtering: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '❌ ERROR: ' + message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Show transaction detail modal
+        function showTransactionDetail(tx) {
+            const modalContent = document.getElementById('modal-content');
+            const typeClass = 'type-' + tx.transaction_type.toLowerCase();
+            const amountClass = tx.amount_numeric >= 0 ? 'amount-positive' : 'amount-negative';
+
+            modalContent.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">DATE</div>
+                    <div class="detail-value">${tx.date}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">DESCRIPTION</div>
+                    <div class="detail-value">${tx.description}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">AMOUNT</div>
+                    <div class="detail-value ${amountClass}">$${Math.abs(tx.amount_numeric).toFixed(2)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">TYPE</div>
+                    <div class="detail-value ${typeClass}">${tx.transaction_type}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">CATEGORY</div>
+                    <div class="detail-value">${tx.category}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">MERCHANT</div>
+                    <div class="detail-value">${tx.merchant || '-'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">BANK</div>
+                    <div class="detail-value">${tx.bank}</div>
+                </div>
+
+                <div class="provenance-section">
+                    <h3>📄 PROVENANCE</h3>
+                    <div class="detail-row">
+                        <div class="detail-label">SOURCE FILE</div>
+                        <div class="detail-value">${tx.source_file}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal(event) {
+            if (event && event.target !== document.getElementById('modal-overlay')) {
+                return;
+            }
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadTransactions();
+        });
+    </script>
+</body>
+</html>

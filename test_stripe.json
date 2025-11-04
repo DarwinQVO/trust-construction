@@ -1,0 +1,52 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "txn_1QJK9xEwBkB18CQK0sVdDHco",
+      "object": "balance_transaction",
+      "amount": 286770,
+      "available_on": 1735171200,
+      "created": 1735084800,
+      "currency": "usd",
+      "description": "Payment from eugenio Castro Garza",
+      "fee": 0,
+      "net": 286770,
+      "reporting_category": "payout",
+      "source": "po_1QJK9xEwBkB18CQK0sVdDHco",
+      "status": "available",
+      "type": "payout"
+    },
+    {
+      "id": "txn_1QHxVbEwBkB18CQKZp8mN4Qr",
+      "object": "balance_transaction",
+      "amount": 286770,
+      "available_on": 1734566400,
+      "created": 1734480000,
+      "currency": "usd",
+      "description": "Payment from eugenio Castro Garza",
+      "fee": 0,
+      "net": 286770,
+      "reporting_category": "payout",
+      "source": "po_1QHxVbEwBkB18CQKZp8mN4Qr",
+      "status": "available",
+      "type": "payout"
+    },
+    {
+      "id": "txn_1QF4KeEwBkB18CQKm3n8r5Qs",
+      "object": "balance_transaction",
+      "amount": 238970,
+      "available_on": 1733961600,
+      "created": 1733875200,
+      "currency": "usd",
+      "description": "Payment from eugenio Castro Garza",
+      "fee": 0,
+      "net": 238970,
+      "reporting_category": "payout",
+      "source": "po_1QF4KeEwBkB18CQKm3n8r5Qs",
+      "status": "available",
+      "type": "payout"
+    }
+  ],
+  "has_more": false,
+  "url": "/v1/balance_transactions"
+}

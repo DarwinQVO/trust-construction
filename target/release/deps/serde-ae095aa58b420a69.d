@@ -1,0 +1,14 @@
+/Users/darwinborges/finance/trust-construction/target/release/deps/serde-ae095aa58b420a69.d: /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/darwinborges/finance/trust-construction/target/release/build/serde-2bd09da36ad10cba/out/private.rs
+
+/Users/darwinborges/finance/trust-construction/target/release/deps/libserde-ae095aa58b420a69.rlib: /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/darwinborges/finance/trust-construction/target/release/build/serde-2bd09da36ad10cba/out/private.rs
+
+/Users/darwinborges/finance/trust-construction/target/release/deps/libserde-ae095aa58b420a69.rmeta: /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/darwinborges/finance/trust-construction/target/release/build/serde-2bd09da36ad10cba/out/private.rs
+
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/darwinborges/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/darwinborges/finance/trust-construction/target/release/build/serde-2bd09da36ad10cba/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/darwinborges/finance/trust-construction/target/release/build/serde-2bd09da36ad10cba/out

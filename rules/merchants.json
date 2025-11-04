@@ -1,0 +1,232 @@
+[
+  {
+    "id": "starbucks",
+    "pattern": "STARBUCKS*",
+    "merchant": "Starbucks",
+    "category": "Restaurants",
+    "transaction_type": "GASTO",
+    "confidence": 0.95,
+    "description": "Normalize all Starbucks variations",
+    "priority": 10
+  },
+  {
+    "id": "amazon_marketplace",
+    "pattern": "AMAZON.COM MARKETPLACE*",
+    "merchant": "Amazon Marketplace",
+    "category": "Online Shopping",
+    "transaction_type": "GASTO",
+    "confidence": 0.98,
+    "description": "Specific Amazon Marketplace purchases",
+    "priority": 100
+  },
+  {
+    "id": "amazon_general",
+    "pattern": "AMAZON*",
+    "merchant": "Amazon",
+    "category": "Shopping",
+    "transaction_type": "GASTO",
+    "confidence": 0.90,
+    "description": "General Amazon purchases",
+    "priority": 10
+  },
+  {
+    "id": "stripe_payment",
+    "pattern": "STRIPE*",
+    "merchant": "Stripe",
+    "category": "Payment Processing",
+    "transaction_type": "GASTO",
+    "confidence": 0.92,
+    "description": "Stripe payment processing fees",
+    "priority": 10
+  },
+  {
+    "id": "uber",
+    "pattern": "UBER*",
+    "merchant": "Uber",
+    "category": "Transportation",
+    "transaction_type": "GASTO",
+    "confidence": 0.94,
+    "description": "Uber rides and Uber Eats",
+    "priority": 10
+  },
+  {
+    "id": "uber_eats",
+    "pattern": "UBER EATS*",
+    "merchant": "Uber Eats",
+    "category": "Food Delivery",
+    "transaction_type": "GASTO",
+    "confidence": 0.96,
+    "description": "Uber Eats food delivery",
+    "priority": 50
+  },
+  {
+    "id": "netflix",
+    "pattern": "NETFLIX*",
+    "merchant": "Netflix",
+    "category": "Entertainment",
+    "transaction_type": "GASTO",
+    "confidence": 0.99,
+    "description": "Netflix subscription",
+    "priority": 10
+  },
+  {
+    "id": "spotify",
+    "pattern": "SPOTIFY*",
+    "merchant": "Spotify",
+    "category": "Entertainment",
+    "transaction_type": "GASTO",
+    "confidence": 0.99,
+    "description": "Spotify subscription",
+    "priority": 10
+  },
+  {
+    "id": "apple_store",
+    "pattern": "APPLE.COM*",
+    "merchant": "Apple",
+    "category": "Technology",
+    "transaction_type": "GASTO",
+    "confidence": 0.95,
+    "description": "Apple online store purchases",
+    "priority": 10
+  },
+  {
+    "id": "google",
+    "pattern": "GOOGLE*",
+    "merchant": "Google",
+    "category": "Technology",
+    "transaction_type": "GASTO",
+    "confidence": 0.90,
+    "description": "Google services and purchases",
+    "priority": 10
+  },
+  {
+    "id": "paypal",
+    "pattern": "PAYPAL*",
+    "merchant": "PayPal",
+    "category": "Payment Processing",
+    "transaction_type": "GASTO",
+    "confidence": 0.93,
+    "description": "PayPal transactions",
+    "priority": 10
+  },
+  {
+    "id": "target",
+    "pattern": "TARGET*",
+    "merchant": "Target",
+    "category": "Shopping",
+    "transaction_type": "GASTO",
+    "confidence": 0.95,
+    "description": "Target store purchases",
+    "priority": 10
+  },
+  {
+    "id": "walmart",
+    "pattern": "WALMART*",
+    "merchant": "Walmart",
+    "category": "Shopping",
+    "transaction_type": "GASTO",
+    "confidence": 0.95,
+    "description": "Walmart store purchases",
+    "priority": 10
+  },
+  {
+    "id": "costco",
+    "pattern": "COSTCO*",
+    "merchant": "Costco",
+    "category": "Shopping",
+    "transaction_type": "GASTO",
+    "confidence": 0.96,
+    "description": "Costco warehouse purchases",
+    "priority": 10
+  },
+  {
+    "id": "whole_foods",
+    "pattern": "WHOLE FOODS*",
+    "merchant": "Whole Foods",
+    "category": "Groceries",
+    "transaction_type": "GASTO",
+    "confidence": 0.97,
+    "description": "Whole Foods grocery purchases",
+    "priority": 10
+  },
+  {
+    "id": "mcdonalds",
+    "pattern": "MCDONALD*",
+    "merchant": "McDonald's",
+    "category": "Restaurants",
+    "transaction_type": "GASTO",
+    "confidence": 0.96,
+    "description": "McDonald's restaurants",
+    "priority": 10
+  },
+  {
+    "id": "chipotle",
+    "pattern": "CHIPOTLE*",
+    "merchant": "Chipotle",
+    "category": "Restaurants",
+    "transaction_type": "GASTO",
+    "confidence": 0.97,
+    "description": "Chipotle Mexican Grill",
+    "priority": 10
+  },
+  {
+    "id": "venmo",
+    "pattern": "VENMO*",
+    "merchant": "Venmo",
+    "category": "Payment Processing",
+    "transaction_type": "TRASPASO",
+    "confidence": 0.94,
+    "description": "Venmo peer-to-peer payments",
+    "priority": 10
+  },
+  {
+    "id": "zelle",
+    "pattern": "ZELLE*",
+    "merchant": "Zelle",
+    "category": "Payment Processing",
+    "transaction_type": "TRASPASO",
+    "confidence": 0.95,
+    "description": "Zelle peer-to-peer payments",
+    "priority": 10
+  },
+  {
+    "id": "atm_withdrawal",
+    "pattern": "*ATM*WITHDRAWAL*",
+    "merchant": "ATM Withdrawal",
+    "category": "Cash",
+    "transaction_type": "TRASPASO",
+    "confidence": 0.99,
+    "description": "ATM cash withdrawals",
+    "priority": 50
+  },
+  {
+    "id": "deposit",
+    "pattern": "*DEPOSIT*",
+    "merchant": "Bank Deposit",
+    "category": "Transfer",
+    "transaction_type": "INGRESO",
+    "confidence": 0.90,
+    "description": "Bank deposits",
+    "priority": 10
+  },
+  {
+    "id": "salary",
+    "pattern": "*SALARY*",
+    "merchant": "Salary",
+    "category": "Income",
+    "transaction_type": "INGRESO",
+    "confidence": 0.98,
+    "description": "Salary payments",
+    "priority": 100
+  },
+  {
+    "id": "payroll",
+    "pattern": "*PAYROLL*",
+    "merchant": "Payroll",
+    "category": "Income",
+    "transaction_type": "INGRESO",
+    "confidence": 0.97,
+    "description": "Payroll deposits",
+    "priority": 100
+  }
+]

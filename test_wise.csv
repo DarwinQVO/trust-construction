@@ -1,0 +1,6 @@
+TransferWise ID,Date,Amount,Currency,Description,Payee Name,Exchange Rate,Fee Amount,Total Amount
+TRANSFER-123456,12/31/2024,2000.00,USD,Payment from Bloom Financial,Bloom Financial Corp,1.00,0.00,2000.00
+TRANSFER-123457,12/23/2024,-2000.00,USD,Convert USD to MXN,eugenio Castro Garza,20.50,15.00,-2015.00
+TRANSFER-123458,12/18/2024,500.00,EUR,Invoice payment,ACME GmbH,0.93,5.00,495.00
+TRANSFER-123459,12/16/2024,-41000.00,MXN,Payment to supplier,Proveedor SA de CV,20.00,200.00,-41200.00
+TRANSFER-123460,12/13/2024,1500.00,USD,Client payment,Tech Startup Inc,1.00,0.00,1500.00
