@@ -56,6 +56,43 @@ pub struct Transaction {
     pub classification_notes: String,
 
     // ========================================================================
+    // IDENTITY & VERSIONING (Badge 19 - Rich Hickey's Identity/Value/State)
+    // ========================================================================
+    /// Stable identity (UUID) - NEVER changes, even when values are corrected
+    /// This is DIFFERENT from idempotency_hash (which is for deduplication)
+    #[serde(default = "default_uuid")]
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub id: String,
+
+    /// Version number (monotonically increasing)
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero_i64")]
+    pub version: i64,
+
+    // ========================================================================
+    // TIME MODEL (Badge 19 - Make time explicit)
+    // ========================================================================
+    /// System time: When this record was created in our system
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_time: Option<DateTime<Utc>>,
+
+    /// Valid from: When this value became true
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub valid_from: Option<DateTime<Utc>>,
+
+    /// Valid until: When this value ceased to be true (None = still current)
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub valid_until: Option<DateTime<Utc>>,
+
+    /// Previous version ID: Link to previous version (for temporal queries)
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub previous_version_id: Option<String>,
+
+    // ========================================================================
     // EXTENSIBLE METADATA (can grow without schema changes)
     // Following Rich Hickey's philosophy: "Aggregates as maps, not structs"
     // ========================================================================
@@ -64,8 +101,19 @@ pub struct Transaction {
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
+// Helper functions for serde defaults
+fn default_uuid() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+
+fn is_zero_i64(val: &i64) -> bool {
+    *val == 0
+}
+
 impl Transaction {
     /// Compute idempotency hash for duplicate detection
+    /// NOTE: This is for DEDUPLICATION, not IDENTITY!
+    /// Identity = id (UUID), Deduplication = hash
     pub fn compute_idempotency_hash(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(format!(
@@ -73,6 +121,92 @@ impl Transaction {
             self.date, self.amount_numeric, self.merchant, self.bank
         ));
         format!("{:x}", hasher.finalize())
+    }
+
+    // ========================================================================
+    // VERSIONING HELPERS (Badge 19 - Rich Hickey's Identity/Value/State)
+    // ========================================================================
+
+    /// Initialize temporal fields for a new transaction
+    pub fn init_temporal_fields(&mut self) {
+        let now = Utc::now();
+
+        // Set UUID if not present
+        if self.id.is_empty() {
+            self.id = uuid::Uuid::new_v4().to_string();
+        }
+
+        // Set version to 1 if 0
+        if self.version == 0 {
+            self.version = 1;
+        }
+
+        // Set timestamps
+        if self.system_time.is_none() {
+            self.system_time = Some(now);
+        }
+        if self.valid_from.is_none() {
+            self.valid_from = Some(now);
+        }
+    }
+
+    /// Check if this transaction is current (no valid_until)
+    pub fn is_current(&self) -> bool {
+        self.valid_until.is_none()
+    }
+
+    /// Check if this transaction was valid at specific time
+    pub fn was_valid_at(&self, time: DateTime<Utc>) -> bool {
+        if let Some(valid_from) = self.valid_from {
+            if valid_from > time {
+                return false;
+            }
+        }
+
+        if let Some(valid_until) = self.valid_until {
+            if valid_until <= time {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Close this version (set valid_until to now)
+    pub fn close_version(&mut self) {
+        self.valid_until = Some(Utc::now());
+    }
+
+    /// Create next version from this transaction
+    /// Increments version, updates timestamps, preserves identity
+    pub fn next_version(&self, change_reason: Option<String>) -> Transaction {
+        let now = Utc::now();
+
+        let mut next = self.clone();
+        next.version += 1;
+        next.valid_from = Some(now);
+        next.valid_until = None;  // New version is current
+        next.previous_version_id = Some(self.id.clone());
+
+        // Store change reason in metadata
+        if let Some(reason) = change_reason {
+            next.metadata.insert(
+                "change_reason".to_string(),
+                serde_json::json!(reason),
+            );
+        }
+
+        next
+    }
+
+    /// Get identity (stable UUID)
+    pub fn identity(&self) -> &str {
+        &self.id
+    }
+
+    /// Get version number
+    pub fn get_version(&self) -> i64 {
+        self.version
     }
 
     // ========================================================================
@@ -172,6 +306,7 @@ pub fn setup_database(conn: &Connection) -> Result<()> {
 
     // ==========================================================================
     // Transactions Table (with extensible metadata column)
+    // Badge 19: Added temporal fields (tx_uuid, version, time model)
     // ==========================================================================
     conn.execute(
         "CREATE TABLE IF NOT EXISTS transactions (
@@ -192,7 +327,14 @@ pub fn setup_database(conn: &Connection) -> Result<()> {
             line_number TEXT NOT NULL,
             classification_notes TEXT,
             metadata TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            -- Badge 19: Time & Identity Model (Rich Hickey's philosophy)
+            tx_uuid TEXT UNIQUE,
+            version INTEGER DEFAULT 1,
+            system_time TEXT,
+            valid_from TEXT,
+            valid_until TEXT,
+            previous_version_id TEXT
         )",
         [],
     )?;
@@ -254,6 +396,9 @@ pub fn load_csv(csv_path: &Path) -> Result<Vec<Transaction>> {
     for result in rdr.deserialize() {
         let mut transaction: Transaction = result.context("Failed to deserialize transaction")?;
 
+        // Initialize temporal fields (UUID, version, timestamps) - Badge 19
+        transaction.init_temporal_fields();
+
         // Add provenance metadata
         transaction.set_provenance(
             Utc::now(),
@@ -277,13 +422,19 @@ pub fn insert_transactions(conn: &Connection, transactions: &[Transaction]) -> R
         // Serialize metadata to JSON
         let metadata_json = serde_json::to_string(&tx.metadata)?;
 
+        // Serialize temporal fields (Badge 19)
+        let system_time_str = tx.system_time.map(|dt| dt.to_rfc3339());
+        let valid_from_str = tx.valid_from.map(|dt| dt.to_rfc3339());
+        let valid_until_str = tx.valid_until.map(|dt| dt.to_rfc3339());
+
         let result = conn.execute(
             "INSERT INTO transactions (
                 idempotency_hash, date, description, amount_original, amount_numeric,
                 transaction_type, category, merchant, currency, account_name,
                 account_number, bank, source_file, line_number, classification_notes,
-                metadata
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+                metadata,
+                tx_uuid, version, system_time, valid_from, valid_until, previous_version_id
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22)",
             params![
                 hash,
                 tx.date,
@@ -301,6 +452,13 @@ pub fn insert_transactions(conn: &Connection, transactions: &[Transaction]) -> R
                 tx.line_number,
                 tx.classification_notes,
                 metadata_json,
+                // Badge 19 temporal fields
+                if tx.id.is_empty() { None } else { Some(&tx.id) },
+                tx.version,
+                system_time_str,
+                valid_from_str,
+                valid_until_str,
+                tx.previous_version_id,
             ],
         );
 
@@ -400,7 +558,8 @@ pub fn get_all_transactions(conn: &Connection) -> Result<Vec<Transaction>> {
         "SELECT date, description, amount_original, amount_numeric,
                 transaction_type, category, merchant, currency,
                 account_name, account_number, bank, source_file,
-                line_number, classification_notes, metadata
+                line_number, classification_notes, metadata,
+                tx_uuid, version, system_time, valid_from, valid_until, previous_version_id
          FROM transactions
          ORDER BY date DESC",
     )?;
@@ -413,6 +572,21 @@ pub fn get_all_transactions(conn: &Connection) -> Result<Vec<Transaction>> {
             } else {
                 HashMap::new()
             };
+
+            // Parse temporal fields (Badge 19)
+            let tx_uuid: Option<String> = row.get(15)?;
+            let version: Option<i64> = row.get(16)?;
+            let system_time_str: Option<String> = row.get(17)?;
+            let valid_from_str: Option<String> = row.get(18)?;
+            let valid_until_str: Option<String> = row.get(19)?;
+            let previous_version_id: Option<String> = row.get(20)?;
+
+            let system_time = system_time_str.and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
+            let valid_from = valid_from_str.and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
+            let valid_until = valid_until_str.and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
 
             Ok(Transaction {
                 date: row.get(0)?,
@@ -429,6 +603,13 @@ pub fn get_all_transactions(conn: &Connection) -> Result<Vec<Transaction>> {
                 source_file: row.get(11)?,
                 line_number: row.get(12)?,
                 classification_notes: row.get(13)?,
+                // Badge 19 fields
+                id: tx_uuid.unwrap_or_default(),
+                version: version.unwrap_or(0),
+                system_time,
+                valid_from,
+                valid_until,
+                previous_version_id,
                 metadata,
             })
         })?
@@ -441,6 +622,44 @@ pub fn verify_count(conn: &Connection) -> Result<i64> {
     let count: i64 = conn.query_row("SELECT COUNT(*) FROM transactions", [], |row| row.get(0))?;
 
     Ok(count)
+}
+
+/// Migrate existing transactions to have UUIDs (Badge 19)
+/// Call this ONCE after upgrading to Badge 19 if you have existing data
+pub fn migrate_add_uuids(conn: &Connection) -> Result<usize> {
+    let now = Utc::now();
+    let now_str = now.to_rfc3339();
+
+    // Find transactions without UUIDs
+    let mut stmt = conn.prepare(
+        "SELECT id FROM transactions WHERE tx_uuid IS NULL OR tx_uuid = ''"
+    )?;
+
+    let row_ids: Vec<i64> = stmt
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut updated = 0;
+
+    // Update each transaction with UUID and temporal fields
+    for row_id in row_ids {
+        let uuid = uuid::Uuid::new_v4().to_string();
+
+        conn.execute(
+            "UPDATE transactions
+             SET tx_uuid = ?1,
+                 version = COALESCE(version, 1),
+                 system_time = COALESCE(system_time, ?2),
+                 valid_from = COALESCE(valid_from, ?2)
+             WHERE id = ?3",
+            params![uuid, now_str, row_id],
+        )?;
+
+        updated += 1;
+    }
+
+    println!("✅ Migration complete: Added UUIDs to {} transactions", updated);
+    Ok(updated)
 }
 
 /// Source file statistics
@@ -494,7 +713,8 @@ pub fn get_transactions_by_source(
         "SELECT date, description, amount_original, amount_numeric,
                 transaction_type, category, merchant, currency,
                 account_name, account_number, bank, source_file,
-                line_number, classification_notes, metadata
+                line_number, classification_notes, metadata,
+                tx_uuid, version, system_time, valid_from, valid_until, previous_version_id
          FROM transactions
          WHERE source_file = ?1
          ORDER BY date DESC",
@@ -508,6 +728,21 @@ pub fn get_transactions_by_source(
             } else {
                 HashMap::new()
             };
+
+            // Parse temporal fields (Badge 19)
+            let tx_uuid: Option<String> = row.get(15)?;
+            let version: Option<i64> = row.get(16)?;
+            let system_time_str: Option<String> = row.get(17)?;
+            let valid_from_str: Option<String> = row.get(18)?;
+            let valid_until_str: Option<String> = row.get(19)?;
+            let previous_version_id: Option<String> = row.get(20)?;
+
+            let system_time = system_time_str.and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
+            let valid_from = valid_from_str.and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
+            let valid_until = valid_until_str.and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
 
             Ok(Transaction {
                 date: row.get(0)?,
@@ -524,6 +759,13 @@ pub fn get_transactions_by_source(
                 source_file: row.get(11)?,
                 line_number: row.get(12)?,
                 classification_notes: row.get(13)?,
+                // Badge 19 fields
+                id: tx_uuid.unwrap_or_default(),
+                version: version.unwrap_or(0),
+                system_time,
+                valid_from,
+                valid_until,
+                previous_version_id,
                 metadata,
             })
         })?
@@ -536,65 +778,73 @@ pub fn get_transactions_by_source(
 mod tests {
     use super::*;
 
+    /// Helper function to create test transactions with all required fields
+    fn create_test_transaction(
+        date: &str,
+        description: &str,
+        amount: f64,
+        tx_type: &str,
+        category: &str,
+        merchant: &str,
+    ) -> Transaction {
+        Transaction {
+            date: date.to_string(),
+            description: description.to_string(),
+            amount_original: format!("${:.2}", amount.abs()),
+            amount_numeric: amount,
+            transaction_type: tx_type.to_string(),
+            category: category.to_string(),
+            merchant: merchant.to_string(),
+            currency: "USD".to_string(),
+            account_name: "Test Account".to_string(),
+            account_number: "1234".to_string(),
+            bank: "Test Bank".to_string(),
+            source_file: "test.csv".to_string(),
+            line_number: "1".to_string(),
+            classification_notes: "".to_string(),
+            // Badge 19 fields
+            id: String::new(),  // Will be set by init_temporal_fields()
+            version: 0,
+            system_time: None,
+            valid_from: None,
+            valid_until: None,
+            previous_version_id: None,
+            metadata: HashMap::new(),
+        }
+    }
+
     #[test]
     fn test_idempotency_import_twice() {
         // Create temporary database
         let conn = Connection::open_in_memory().unwrap();
         setup_database(&conn).unwrap();
 
-        // Create test transactions
+        // Create test transactions using helper
         let transactions = vec![
-            Transaction {
-                date: "12/31/2024".to_string(),
-                description: "STARBUCKS #12345".to_string(),
-                amount_original: "-45.99".to_string(),
-                amount_numeric: -45.99,
-                transaction_type: "GASTO".to_string(),
-                category: "Dining".to_string(),
-                merchant: "STARBUCKS".to_string(),
-                currency: "USD".to_string(),
-                account_name: "Checking".to_string(),
-                account_number: "1234".to_string(),
-                bank: "BofA".to_string(),
-                source_file: "test_idempotency.csv".to_string(),
-                line_number: "2".to_string(),
-                classification_notes: "".to_string(),
-                metadata: HashMap::new(),
-            },
-            Transaction {
-                date: "12/30/2024".to_string(),
-                description: "AMAZON PURCHASE".to_string(),
-                amount_original: "-120.50".to_string(),
-                amount_numeric: -120.50,
-                transaction_type: "GASTO".to_string(),
-                category: "Shopping".to_string(),
-                merchant: "AMAZON".to_string(),
-                currency: "USD".to_string(),
-                account_name: "Checking".to_string(),
-                account_number: "1234".to_string(),
-                bank: "BofA".to_string(),
-                source_file: "test_idempotency.csv".to_string(),
-                line_number: "3".to_string(),
-                classification_notes: "".to_string(),
-                metadata: HashMap::new(),
-            },
-            Transaction {
-                date: "12/29/2024".to_string(),
-                description: "SALARY DEPOSIT".to_string(),
-                amount_original: "2000.00".to_string(),
-                amount_numeric: 2000.00,
-                transaction_type: "INGRESO".to_string(),
-                category: "Income".to_string(),
-                merchant: "EMPLOYER".to_string(),
-                currency: "USD".to_string(),
-                account_name: "Checking".to_string(),
-                account_number: "1234".to_string(),
-                bank: "BofA".to_string(),
-                source_file: "test_idempotency.csv".to_string(),
-                line_number: "4".to_string(),
-                classification_notes: "".to_string(),
-                metadata: HashMap::new(),
-            },
+            create_test_transaction(
+                "12/31/2024",
+                "STARBUCKS #12345",
+                -45.99,
+                "GASTO",
+                "Dining",
+                "STARBUCKS",
+            ),
+            create_test_transaction(
+                "12/30/2024",
+                "AMAZON PURCHASE",
+                -120.50,
+                "GASTO",
+                "Shopping",
+                "AMAZON",
+            ),
+            create_test_transaction(
+                "12/29/2024",
+                "SALARY DEPOSIT",
+                2000.00,
+                "INGRESO",
+                "Income",
+                "EMPLOYER",
+            ),
         ];
 
         println!("Created {} test transactions", transactions.len());
@@ -637,23 +887,14 @@ mod tests {
 
     #[test]
     fn test_compute_idempotency_hash() {
-        let tx = Transaction {
-            date: "12/31/2024".to_string(),
-            description: "TEST PURCHASE".to_string(),
-            amount_original: "-50.00".to_string(),
-            amount_numeric: -50.00,
-            transaction_type: "GASTO".to_string(),
-            category: "Test".to_string(),
-            merchant: "TEST MERCHANT".to_string(),
-            currency: "USD".to_string(),
-            account_name: "Test Account".to_string(),
-            account_number: "1234".to_string(),
-            bank: "BofA".to_string(),
-            source_file: "test.csv".to_string(),
-            line_number: "1".to_string(),
-            classification_notes: "".to_string(),
-            metadata: HashMap::new(),
-        };
+        let tx = create_test_transaction(
+            "12/31/2024",
+            "TEST PURCHASE",
+            -50.00,
+            "GASTO",
+            "Test",
+            "TEST MERCHANT",
+        );
 
         let hash1 = tx.compute_idempotency_hash();
         let hash2 = tx.compute_idempotency_hash();
@@ -673,23 +914,14 @@ mod tests {
 
     #[test]
     fn test_extensible_metadata() {
-        let mut tx = Transaction {
-            date: "12/31/2024".to_string(),
-            description: "TEST".to_string(),
-            amount_original: "-50.00".to_string(),
-            amount_numeric: -50.00,
-            transaction_type: "GASTO".to_string(),
-            category: "Test".to_string(),
-            merchant: "TEST".to_string(),
-            currency: "USD".to_string(),
-            account_name: "Test".to_string(),
-            account_number: "1234".to_string(),
-            bank: "BofA".to_string(),
-            source_file: "test.csv".to_string(),
-            line_number: "1".to_string(),
-            classification_notes: "".to_string(),
-            metadata: HashMap::new(),
-        };
+        let mut tx = create_test_transaction(
+            "12/31/2024",
+            "TEST",
+            -50.00,
+            "GASTO",
+            "Test",
+            "TEST",
+        );
 
         // Add provenance
         tx.set_provenance(

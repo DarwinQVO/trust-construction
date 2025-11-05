@@ -318,6 +318,13 @@ mod tests {
             source_file: "test.csv".to_string(),
             line_number: "1".to_string(),
             classification_notes: "".to_string(),
+            // Badge 19 fields - defaults
+            id: String::new(),
+            version: 0,
+            system_time: None,
+            valid_from: None,
+            valid_until: None,
+            previous_version_id: None,
             metadata: HashMap::new(),
         }
     }

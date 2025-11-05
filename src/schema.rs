@@ -402,7 +402,7 @@ mod tests {
         metadata.insert("extracted_at".to_string(), serde_json::json!("2024-01-15T10:30:00Z"));
         metadata.insert("parser_version".to_string(), serde_json::json!("test_v1.0"));
         metadata.insert("confidence_score".to_string(), serde_json::json!(0.95));
-        
+
         Transaction {
             date: "01/15/2024".to_string(),
             description: "STARBUCKS".to_string(),
@@ -418,6 +418,13 @@ mod tests {
             source_file: "test.csv".to_string(),
             line_number: "23".to_string(),
             classification_notes: String::new(),
+            // Badge 19 fields - defaults
+            id: String::new(),
+            version: 0,
+            system_time: None,
+            valid_from: None,
+            valid_until: None,
+            previous_version_id: None,
             metadata,
         }
     }
